@@ -1,0 +1,39 @@
+name: Import Armageddon
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: github.event.head_commit.message != 'Import Armageddon app'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Armageddon source
+        run: |
+          git clone --depth 1 --branch Armageddon https://github.com/fbzzvjbwpt-ui/Sarti-SpritzX.git /tmp/armageddon
+
+      - name: Replace target contents with Armageddon
+        run: |
+          rsync -a --delete --exclude='.git' /tmp/armageddon/ ./
+
+      - name: Commit imported app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to import"
+            exit 0
+          fi
+          git commit -m "Import Armageddon app"
+          git push origin HEAD:main
